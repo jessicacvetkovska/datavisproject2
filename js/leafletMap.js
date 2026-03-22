@@ -19,7 +19,7 @@ class LeafletMap {
   initVis() {
     let vis = this;
 
-
+    vis.fullData = vis.data
     //OpenStreetMap - shows neighborhoods clearly
     vis.openStreetUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
     vis.openStreetAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -95,12 +95,27 @@ class LeafletMap {
 
   }
 
-  updateVis() {
+  filterBySRType(selectedType){
     let vis = this;
-    //not using yet... 
 
-
+    vis.data = selectedType === 'all'
+      ? vis.fullData
+      : vis.fullData.filter(d => d.SR_TYPE_DESC === selectedType)
+    vis.updateVis();
   }
+
+updateVis() {
+    let vis = this;
+
+    vis.Dots = vis.svg.selectAll('circle')
+        .data(vis.data)
+        .join('circle')
+            .attr("fill", "steelblue")
+            .attr("stroke", "black")
+            .attr("cx", d => vis.theMap.latLngToLayerPoint([d.LATITUDE, d.LONGITUDE]).x)
+            .attr("cy", d => vis.theMap.latLngToLayerPoint([d.LATITUDE, d.LONGITUDE]).y)
+            .attr("r", 3);
+}
 
 
   renderVis() {
