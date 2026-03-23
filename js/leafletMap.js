@@ -43,6 +43,10 @@ class LeafletMap {
 
     // Set default zoom to Cincinnati upon open
     vis.theMap.setView([39.1413, -84.5061], 12);
+    
+    L.svg().addTo(vis.theMap);
+    vis.overlay = d3.select(vis.theMap.getPanes().overlayPane)
+    vis.svg = vis.overlay.select('svg').attr("pointer-events", "auto")    
 
     vis.Dots = vis.svg.selectAll('circle')
                 .data(vis.data) 
