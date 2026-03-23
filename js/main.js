@@ -3,8 +3,8 @@ d3.csv('/js/data/311Sample.csv') // Might be replaced with a new preprocessed CS
     console.log("number of items: " + data.length);
 
     data.forEach(d => {
-      d.latitude = +d.latitude; 
-      d.longitude = +d.longitude;  
+      d.LATITUDE = +d.LATITUDE; 
+      d.LONGITUDE = +d.LONGITUDE;  
       // d.SR_TYPE = d.SR_TYPE; // Get the service type - will need to preprocess 311Sample first after deciding which attr to go with
     });
 
