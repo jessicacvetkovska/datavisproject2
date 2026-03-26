@@ -23,7 +23,7 @@ class LeafletMap {
 
     // Initialize Color Scales
 
-    // Neighborhood Color Scale
+    // Neighborhood Color ScaleYYY
     const neighborhoods = [
         "EAST PRICE HILL", "CUF", "LINWOOD", "MILLVALE", "HARTWELL", 
         "PLEASANT RIDGE", "WESTWOOD", "WALNUT HILLS", "RIVERSIDE", 
