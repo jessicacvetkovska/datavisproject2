@@ -15,7 +15,14 @@
             <option value="TRASH, BULK ITEM PICK-UP">Trash Pickup</option>
             <!-- etc -->
         </select>
-        
+        <label for="color-by-filter">Color By:</label>
+            <select id="color-by-filter">
+                <option value="none">None (Default)</option>
+                <option value="time">Time to Update</option>
+                <option value="neighborhood">Neighborhood</option>
+                <option value="priority">Priority</option>
+                <option value="agency">Responding Agency</option>
+            </select>
         <div id="my-map"></div>
         
         <script src="js/d3.v6.min.js"></script>

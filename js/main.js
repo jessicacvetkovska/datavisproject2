@@ -11,11 +11,15 @@ d3.csv('/js/data/311Sample.csv') // Might be replaced with a new preprocessed CS
     // Initialize map and then show it
     leafletMap = new LeafletMap({ parentElement: '#my-map'}, data);
 
+    // Service Type Filter
     document.getElementById('sr-type-filter').addEventListener('change', function() {
-    myMap.filterBySRType(this.value);
+    leafletMap.filterBySRType(this.value);
     });
 
-
+    // Color Filter
+    document.getElementById('color-by-filter').addEventListener('change', function() {
+        leafletMap.changeColorBy(this.value);
+    });
   })
   .catch(error => console.error(error));
 
