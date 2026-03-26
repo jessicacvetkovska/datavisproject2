@@ -214,7 +214,6 @@ class LeafletMap {
   vis.base_layer.addTo(vis.theMap);
 }
 
-updateVis() {
   // Main drawing function (handles init, zoom, data filtering)
   updateVis() {
     let vis = this;
@@ -249,7 +248,7 @@ updateVis() {
                 d3.select('#tooltip')
                     .style('opacity', 1)
                     .style('z-index', 1000000)
-                    .html(`<div class="tooltip-label">Description: ${d.SR_TYPE_DESC}<br>Priority: ${d.PRIORITY || 'N/A'}<br>Agency: ${d.DEPT_NAME || 'N/A'}<br>Days to Update: ${d.time_diff ? d.time_diff.toFixed(1) : 'N/A'}</div>`);
+                    .html(`<div class="tooltip-label">Description: ${d.SR_TYPE_DESC}<br>Priority: ${d.PRIORITY || 'N/A'}<br>Agency: ${d.DEPT_NAME || 'N/A'}<br>Date of Call: ${d.DATE_CREATED}<br>Date Closed: ${d.DATE_CLOSED}<br>Days to Update: ${d.time_diff ? d.time_diff.toFixed(1) : 'N/A'}</div>`);
               })
             .on('mousemove', (event) => {
                 d3.select('#tooltip')
