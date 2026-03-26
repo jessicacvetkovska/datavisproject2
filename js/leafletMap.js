@@ -149,6 +149,21 @@ class LeafletMap {
     vis.updateVis();
   }
 
+  setBackground(selectedBackground, selectedAttr) {
+  let vis = this;
+
+  // Remove the current tile layer from the map
+  vis.base_layer.remove();
+
+  // Create and add the new tile layer
+  vis.base_layer = L.tileLayer(selectedBackground, {
+    attribution: selectedAttr,
+    ext: 'png'
+  });
+
+  vis.base_layer.addTo(vis.theMap);
+}
+
   // Main drawing function (handles init, zoom, data filtering)
   updateVis() {
     let vis = this;
@@ -171,7 +186,7 @@ class LeafletMap {
                 d3.select('#tooltip')
                     .style('opacity', 1)
                     .style('z-index', 1000000)
-                    .html(`<div class="tooltip-label">Description: ${d.SR_TYPE_DESC}<br>Priority: ${d.PRIORITY || 'N/A'}<br>Agency: ${d.DEPT_NAME || 'N/A'}<br>Days to Update: ${d.time_diff ? d.time_diff.toFixed(1) : 'N/A'}</div>`);
+                    .html(`<div class="tooltip-label">Description: ${d.SR_TYPE_DESC}<br>Priority: ${d.PRIORITY || 'N/A'}<br>Agency: ${d.DEPT_NAME || 'N/A'}<br>Date of Call: ${d.DATE_CREATED}<br>Date Closed: ${d.DATE_CLOSED}<br>Days to Update: ${d.time_diff ? d.time_diff.toFixed(1) : 'N/A'}</div>`);
               })
             .on('mousemove', (event) => {
                 d3.select('#tooltip')

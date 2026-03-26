@@ -20,6 +20,20 @@ d3.csv('/js/data/311Sample.csv') // Might be replaced with a new preprocessed CS
     document.getElementById('color-by-filter').addEventListener('change', function() {
         leafletMap.changeColorBy(this.value);
     });
+
+    d3.select('#btn-light').on('click', () => {
+    leafletMap.setBackground(
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    );
+    });
+
+    d3.select('#btn-dark').on('click', () => {
+    leafletMap.setBackground(
+      'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}',
+      '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>'
+    );
+  });
   })
   .catch(error => console.error(error));
 
