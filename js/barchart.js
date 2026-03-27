@@ -1,4 +1,4 @@
-class Barchart {
+class BarChart {
 
   /**
    * Class constructor with basic chart configuration
