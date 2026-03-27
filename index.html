@@ -26,6 +26,12 @@
                 <option value="priority">Priority</option>
                 <option value="agency">Responding Agency</option>
             </select>
+
+
+
+        <div id="legend-container">
+            <div id="map-legend"></div>
+        </div>
         <div id="my-map"></div>
         
         <script src="js/d3.v6.min.js"></script>
@@ -37,9 +43,24 @@
         <script src="js/main.js"></script>
         
 
-        <div id="tooltip"></div>
         
+        <div id="tooltip"></div>
+            <h3>Calls Over The Year Timeline</h3>
+            <script src="js/linechart.js"></script>
         <svg id="line-chart"></svg>
-        <svg id="chart"></svg>
+
+
+        <div class="charts-container" style="display: flex; gap: 20px; margin-top: 20px;">
+            <div style="flex: 1;">
+                <h3>Top Neighborhoods by Requests</h3>
+                <svg id="bar-chart"></svg>
+                
+                <h3 style="margin-top: 30px;">Most Common Request Methods</h3>
+                <svg id="method-bar-chart"></svg>
+            </div>
+        </div>
+        <script src="js/barchart.js"></script>
+
+
     </body>
 </html>

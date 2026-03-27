@@ -21,8 +21,19 @@ class LeafletMap {
     let vis = this;
     vis.fullData = vis.data;
 
-    // Initialize Color Scales
+    // Define Domains for Legends
+    vis.neighborhoods = [...new Set(vis.fullData.map(d => d.NEIGHBORHOOD))].sort();
+    vis.agencies = [...new Set(vis.fullData.map(d => d.DEPT_NAME))].sort();
+    vis.priorities = ['STANDARD', 'PRIORITY', 'HAZARDOUS'];
 
+    // Initialize Color Scales
+    // Generate the standard 50 colors
+    const baseColors = d3.quantize(d3.interpolateRainbow, vis.neighborhoods.length);
+    
+    // Time to Update: Sequential scale (Yellow to Red)
+    const maxTime = d3.max(vis.fullData, d => d.time_diff);
+    vis.colorScaleTime = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, maxTime]);
+    
     // Neighborhood Color ScaleYYY
     const neighborhoods = [
         "EAST PRICE HILL", "CUF", "LINWOOD", "MILLVALE", "HARTWELL", 
@@ -39,14 +50,21 @@ class LeafletMap {
         "WINTON HILLS", "VILLAGES AT ROLL HILL", "CARTHAGE", "SEDAMSVILLE", 
         "N/A", "0"
     ];
+
+
+    // Shuffle colors so neighbors in the list get very different hues
+    const neighborScatteredColors = vis.neighborhoods.map((d, i) => {
+        return baseColors[(i * 13) % baseColors.length];
+    });
+
+    // Apply to scale
     vis.colorScaleNeighborhood = d3.scaleOrdinal()
-        .domain(neighborhoods)
-        .range(d3.quantize(d3.interpolateRainbow, neighborhoods.length));
-    
+        .domain(vis.neighborhoods)
+        .range(neighborScatteredColors);
     
     // Priority Color Scale
     vis.colorScalePriority = d3.scaleOrdinal()
-        .domain(['STANDARD', 'PRIORITY', 'HAZARDOUS']) 
+        .domain(vis.priorities) 
         .range(['#2ca02c', '#ff7f0e', '#d62728']); 
     
         
@@ -67,9 +85,16 @@ class LeafletMap {
         "FIRE DEPT"
     ];
 
+
+    // Shuffle colors so agencies in the list get very different hues
+    const agencyScatteredColors = vis.agencies.map((d, i) => {
+      return baseColors[(i * 13) % baseColors.length];
+    });
+
+    // Apply to scale
     vis.colorScaleAgency = d3.scaleOrdinal()
-        .domain(agencies)
-        .range(d3.quantize(d3.interpolateRainbow, agencies.length));
+        .domain(vis.agencies)
+        .range(agencyScatteredColors);
 
 
     // Setup Map
@@ -107,7 +132,7 @@ class LeafletMap {
   getPointColor(d) {
       let vis = this;
       // Time Point Color
-      // if (vis.colorBy === 'time')
+      if (vis.colorBy === 'time') return vis.colorScaleTime(d.time_diff);
       
       // Neighborhood
       if (vis.colorBy === 'neighborhood') {
@@ -135,7 +160,48 @@ class LeafletMap {
           .transition()
           .duration(300)
           .attr("fill", d => vis.getPointColor(d));
+
+      vis.updateLegend();
   }
+
+  updateLegend() {
+      let vis = this;
+      const legendContainer = d3.select('#map-legend');
+      if (legendContainer.empty()) return; 
+      legendContainer.html(""); 
+
+      if (vis.colorBy === 'none') return;
+
+      let legendData = [];
+      // Set legend data based on colorBy filter
+      if (vis.colorBy === 'priority') {
+          legendData = vis.priorities.map(p => ({ label: p, color: vis.colorScalePriority(p) }));
+      } else if (vis.colorBy === 'agency') {
+          legendData = vis.agencies.map(a => ({ label: a, color: vis.colorScaleAgency(a) }));
+      } else if (vis.colorBy === 'neighborhood') {
+          legendData = vis.neighborhoods.map(n => ({ label: n, color: vis.colorScaleNeighborhood(n) }));
+      } else if (vis.colorBy === 'time') {
+          const maxTime = vis.colorScaleTime.domain()[1];
+          for (let i = 0; i <= 4; i++) {
+              let val = (maxTime / 4) * i;
+              legendData.push({ label: `${val.toFixed(0)} days`, color: vis.colorScaleTime(val) });
+          }
+      }
+
+      // Create the legend boxes
+      const items = legendContainer.selectAll('.legend-item')
+        .data(legendData)
+        .enter()
+        .append('div')
+        .attr('class', 'legend-item'); // Uses CSS from style.css
+
+    items.append('div')
+        .attr('class', 'legend-color') // Uses CSS from style.css
+        .style('background-color', d => d.color);
+
+    items.append('span')
+        .text(d => d.label);
+    }
 
   filterBySRType(selectedType){
     let vis = this;

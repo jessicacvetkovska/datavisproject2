@@ -15,7 +15,18 @@ d3.csv('/js/data/311Sample.csv') // Might be replaced with a new preprocessed CS
       d.LATITUDE = +d.LATITUDE; 
       d.LONGITUDE = +d.LONGITUDE;  
       d.DATE_CREATED = parseDate(d.DATE_CREATED);
-      // d.SR_TYPE = d.SR_TYPE; // Get the service type - will need to preprocess 311Sample first after deciding which attr to go with
+      const updateDate = parseDate(d.DATE_LAST_UPDATE);
+      
+      // Store the parsed date objects
+      d.DATE_CREATED_OBJ = d.DATE_CREATED;
+      
+      // Calculate time difference in days
+      if (d.DATE_CREATED && updateDate) {
+        const diffTime = Math.abs(updateDate - d.DATE_CREATED);
+        d.time_diff = diffTime / (1000 * 60 * 60 * 24); // milliseconds to days
+      } else {
+        d.time_diff = 0;
+      }
     });
 
     // Initialize map and then show it
@@ -72,7 +83,7 @@ barchart = new Barchart({ parentElement: '#chart', yAxisLabel: 'Number of Calls'
 barchart.updateVis();
 
 
-
+// Line Chart Initialization
  const binnedData = d3.rollups(
   data.filter(d => d.DATE_CREATED !== null),
   v => v.length,          
@@ -83,6 +94,48 @@ barchart.updateVis();
 console.log('max count:', d3.max(binnedData, d => d.count));
 lineChart = new LineChart({ parentElement: '#line-chart' }, binnedData);
 lineChart.updateVis();
+
+//------------------------------------------------------------------------------
+
+// Neighborhood request distributions
+const neighborhoodCounts = d3.rollups(
+    data.filter(d => d.NEIGHBORHOOD && d.NEIGHBORHOOD !== "N/A"),
+    v => v.length,
+    d => d.NEIGHBORHOOD
+)
+.map(([name, count]) => ({ name, count }))
+.sort((a, b) => b.count - a.count) // Sort descending
+.slice(0, 10); // Display Top 10 districts
+
+// Initialize Neighborhoods Bar Chart
+const barChart = new BarChart({ 
+    parentElement: '#bar-chart',
+    containerWidth: 500,
+    containerHeight: 300
+}, neighborhoodCounts);
+barChart.updateVis();
+
+// Request method distributions
+const methodCounts = d3.rollups(
+    data.filter(d => d.METHOD_RECEIVED), // Filter out empty values
+    v => v.length,
+    d => d.METHOD_RECEIVED
+)
+.map(([name, count]) => ({ name, count }))
+.sort((a, b) => b.count - a.count); // Sort descending
+
+//------------------------------------------------------------------------------
+
+// Initialize Method Bar Chart
+const methodChart = new BarChart({ 
+    parentElement: '#method-bar-chart',
+    containerWidth: 500,
+    containerHeight: 300,
+    // We can pass custom margins if method names are long
+    margin: { top: 20, right: 20, bottom: 80, left: 60 } 
+}, methodCounts);
+
+methodChart.updateVis();
 
 })
   .catch(error => console.error(error));
