@@ -11,7 +11,7 @@ class BarChart {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 500,
       containerHeight: _config.containerHeight || 300,
-      margin: { top: 20, right: 20, bottom: 100, left: 60 }
+      margin: _config.margin || { top: 20, right: 20, bottom: 100, left: 60 },
       reverseOrder: _config.reverseOrder || false,
       tooltipPadding: _config.tooltipPadding || 15,
       yAxisLabel: _config.yAxisLabel || 'count',
