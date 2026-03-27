@@ -108,7 +108,7 @@ const neighborhoodCounts = d3.rollups(
 .slice(0, 10); // Display Top 10 districts
 
 // Initialize Neighborhoods Bar Chart
-const barChart = new BarChart({ 
+const barChart = new NBH_Req_BarChart({ 
     parentElement: '#bar-chart',
     containerWidth: 500,
     containerHeight: 300
@@ -127,7 +127,7 @@ const methodCounts = d3.rollups(
 //------------------------------------------------------------------------------
 
 // Initialize Method Bar Chart
-const methodChart = new BarChart({ 
+const methodChart = new NBH_Req_BarChart({ 
     parentElement: '#method-bar-chart',
     containerWidth: 500,
     containerHeight: 300,
