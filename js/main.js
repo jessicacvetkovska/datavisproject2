@@ -137,6 +137,25 @@ const methodChart = new NBH_Req_BarChart({
 
 methodChart.updateVis();
 
+
+// Initialize Number of Calls by Responding Department Chart
+const deptCounts = d3.rollups(
+    data.filter(d => d.DEPT_NAME && d.DEPT_NAME !== "N/A"),
+    v => v.length,
+    d => d.DEPT_NAME
+)
+.map(([name, count]) => ({ name, count }))
+.sort((a, b) => b.count - a.count); // Sort descending
+
+// Initialize Department Bar Chart
+const deptChart = new NBH_Req_BarChart({ 
+    parentElement: '#dept-chart',
+    containerWidth: 500,
+    containerHeight: 300
+}, deptCounts);
+deptChart.updateVis();
+
 })
   .catch(error => console.error(error));
+
 
