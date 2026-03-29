@@ -33,15 +33,16 @@
             <div id="map-legend"></div>
         </div>
         <div id="my-map"></div>
-        
+
         <script src="js/d3.v6.min.js"></script>
         <script src="js/leaflet.js"></script>
-        <script src="js/linechart.js"></script>
-        <script src="js/leafletMap.js"></script>
-        <script src="js/barchart.js"></script>
-        <script src="js/barchart2.js"></script>
-    
+        <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
         <script src="js/main.js"></script>
+        <script src="js/leafletMap.js"></script>
+        <script src="js/linechart.js"></script>
+        <script src="js/barchart.js"></script>
+    
         
 
         
@@ -54,7 +55,7 @@
         <div class="charts-container" style="display: flex; gap: 20px; margin-top: 20px;">
             <div style="flex: 1;">
                 <h3>Top Neighborhoods by Requests</h3>
-                <svg id="bar-chart"></svg>
+                <svg id="neighborhood-chart"></svg>
                 
                 <h3 style="margin-top: 30px;">Most Common Request Methods</h3>
                 <svg id="method-bar-chart"></svg>
@@ -63,7 +64,7 @@
                 <svg id="dept-chart"></svg>
 
                 <h3 style="margin-top: 30px;">Number of Calls by Priority</h3>
-                <svg id="chart"></svg>
+                <svg id="priority-chart"></svg>
             </div>
         </div>
         

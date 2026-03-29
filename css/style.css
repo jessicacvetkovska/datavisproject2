@@ -36,3 +36,16 @@
     border: 1px solid #000;
     flex-shrink: 0;          /* Keep the color box from distorting */
 }
+
+.bar {
+    transition: fill 0.2s;
+    cursor: pointer;
+}
+.bar:hover {
+    fill: #14dfdf; /* Orange hover */
+}
+.bar.active {
+    fill: #9f0709; /* Red for selection */
+    stroke: #000;
+    stroke-width: 2px;
+}
