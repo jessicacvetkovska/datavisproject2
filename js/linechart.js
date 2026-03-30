@@ -99,9 +99,6 @@ class LineChart {
     // Set the scale input domains
     vis.xScale.domain(d3.extent(vis.data, vis.xValue));
     vis.yScale.domain([0, d3.max(vis.data, vis.yValue)]);
-    console.log('sample data:', vis.data.slice(0, 3));
-    console.log('yScale domain:', vis.yScale.domain());
-    console.log('xScale domain:', vis.xScale.domain());
 
     vis.bisectDate = d3.bisector(vis.xValue).left;
 
