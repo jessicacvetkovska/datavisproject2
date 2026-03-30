@@ -16,12 +16,16 @@ function parseDate(str) {
     if (!str || str.trim() === '') return null;
     const parts = str.trim().split(/\s+/);
     const months = {Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11};
-    // Format is YYYY Month DD
-    return new Date(+parts[0], months[parts[1]], +parts[2]);
+    // Format is YYYY Month DD, handle 2-digit or 00XX years
+    let year = +parts[0];
+    if (year < 100) {
+        year += 2000;
+    }
+    return new Date(year, months[parts[1]], +parts[2]);
 }
 
 // Load the dataset
-d3.csv('js/data/311Sample.csv').then(data => {
+d3.csv('js/data/Cincinnati311.csv').then(data => {
     allData = data;
 
     // Data Preprocessing
