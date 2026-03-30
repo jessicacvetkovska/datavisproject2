@@ -25,7 +25,7 @@ function parseDate(str) {
 }
 
 // Load the dataset
-d3.csv('js/data/311Sample.csv').then(data => {
+d3.csv('js/data/Cincinnati311.csv').then(data => {
     allData = data;
 
     // Data Preprocessing
