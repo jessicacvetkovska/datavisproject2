@@ -8,9 +8,13 @@ class LeafletMap {
   constructor(_config, _data) {
     this.config = {
       parentElement: _config.parentElement,
+      onBrush: _config.onBrush || (() => {}) // Callback for spatial brush
     }
     this.data = _data;
     this.colorBy = 'none'; // Track current color state
+    this.isBrushing = false;
+    this.brushStart = null;
+    this.brushRect = null;
     this.initVis();
   }
   
@@ -120,6 +124,14 @@ class LeafletMap {
     L.svg().addTo(vis.theMap);
     vis.overlay = d3.select(vis.theMap.getPanes().overlayPane);
     vis.svg = vis.overlay.select('svg').attr("pointer-events", "auto");
+
+    // Add brush rectangle
+    vis.brushRect = vis.svg.append('rect')
+        .attr('class', 'brush-rect')
+        .attr('fill', 'rgba(0, 123, 255, 0.3)')
+        .attr('stroke', 'blue')
+        .attr('stroke-width', 2)
+        .style('display', 'none');
 
     // Redraw points when zooming in and out
     vis.theMap.on("zoomend", function(){
@@ -294,13 +306,65 @@ class LeafletMap {
               // Add to initVis in leafletMap.js
               vis.theMap.on('mousedown', (e) => {
                   if (e.originalEvent.shiftKey) {
+                      vis.isBrushing = true;
                       vis.theMap.dragging.disable();
-                      // Logic for a selection rectangle could go here
+                      const point = vis.theMap.latLngToContainerPoint(e.latlng);
+                      vis.brushStart = point;
+                      vis.brushRect
+                          .attr('x', point.x)
+                          .attr('y', point.y)
+                          .attr('width', 0)
+                          .attr('height', 0)
+                          .style('display', null);
+                  }
+              });
+
+              vis.theMap.on('mousemove', (e) => {
+                  if (vis.isBrushing && vis.brushStart) {
+                      const currentPoint = vis.theMap.latLngToContainerPoint(e.latlng);
+                      const x = Math.min(vis.brushStart.x, currentPoint.x);
+                      const y = Math.min(vis.brushStart.y, currentPoint.y);
+                      const width = Math.abs(currentPoint.x - vis.brushStart.x);
+                      const height = Math.abs(currentPoint.y - vis.brushStart.y);
+                      vis.brushRect
+                          .attr('x', x)
+                          .attr('y', y)
+                          .attr('width', width)
+                          .attr('height', height);
                   }
               });
 
               vis.theMap.on('mouseup', () => {
-                  vis.theMap.dragging.enable();
+                  if (vis.isBrushing) {
+                      vis.isBrushing = false;
+                      vis.theMap.dragging.enable();
+                      // Get selected points
+                      const bounds = vis.getBrushBounds();
+                      if (bounds) {
+                          const selectedPoints = vis.data.filter(d => {
+                              const point = vis.theMap.latLngToContainerPoint([d.LATITUDE, d.LONGITUDE]);
+                              return point.x >= bounds.x && point.x <= bounds.x + bounds.width &&
+                                     point.y >= bounds.y && point.y <= bounds.y + bounds.height;
+                          });
+                          vis.config.onBrush(selectedPoints.length > 0 ? selectedPoints : null);
+                      } else {
+                          vis.config.onBrush(null);
+                      }
+                      vis.brushRect.style('display', 'none');
+                  }
               });
+
+              vis.theMap.on('dblclick', () => {
+                  vis.config.onBrush(null); // Clear spatial selection
+              });
+  }
+
+  getBrushBounds() {
+      let vis = this;
+      if (!vis.brushRect) return null;
+      const rect = vis.brushRect.node();
+      if (!rect) return null;
+      const bbox = rect.getBBox();
+      return bbox.width > 0 && bbox.height > 0 ? bbox : null;
   }
 }

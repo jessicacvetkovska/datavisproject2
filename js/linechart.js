@@ -10,7 +10,8 @@ class LineChart {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 800,
       containerHeight: _config.containerHeight || 240,
-      margin: _config.margin || {top: 25, right: 30, bottom: 30, left: 50}
+      margin: _config.margin || {top: 25, right: 30, bottom: 30, left: 50},
+      onBrush: _config.onBrush || (() => {}) // Callback for brush events
     }
     this.data = _data;
     this.initVis();
@@ -69,8 +70,6 @@ class LineChart {
         .attr('height', vis.height)
         .attr('fill', 'none')
         .attr('pointer-events', 'all');
-
-        //(event,d) => {
 
     // Empty tooltip group (hidden by default)
     vis.tooltip = vis.chart.append('g')
