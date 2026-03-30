@@ -124,6 +124,20 @@ class LeafletMap {
       vis.updateVis();
     });
 
+
+    // Initialize the Heatmap Layer
+    // We start with an empty array; it will be populated in updateVis
+    vis.heatLayer = L.heatLayer([], {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+        minOpacity: 0.4,
+        gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+    }).addTo(vis.theMap);
+
+    // Ensure the SVG (circles) stays on top of the heatmap for interaction
+    vis.svg.raise();
+    
     // Call updateVis to draw the initial points
     vis.updateVis();
   }
@@ -240,6 +254,8 @@ class LeafletMap {
             // Apply the current color state during any redraw/zoom
             .attr("fill", d => vis.getPointColor(d)) 
             .attr("stroke", "black")
+            .attr("stroke-width", 0.5)
+            .style("opacity", vis.colorBy === 'none' ? 0.6 : 1)
             .attr("cx", d => vis.theMap.latLngToLayerPoint([d.LATITUDE, d.LONGITUDE]).x)
             .attr("cy", d => vis.theMap.latLngToLayerPoint([d.LATITUDE, d.LONGITUDE]).y)
             .attr("r", 3)
@@ -267,6 +283,18 @@ class LeafletMap {
                   .attr('r', 3); 
 
                 d3.select('#tooltip').style('opacity', 0);
+              });
+
+              // Add to initVis in leafletMap.js
+              vis.theMap.on('mousedown', (e) => {
+                  if (e.originalEvent.shiftKey) {
+                      vis.theMap.dragging.disable();
+                      // Logic for a selection rectangle could go here
+                  }
+              });
+
+              vis.theMap.on('mouseup', () => {
+                  vis.theMap.dragging.enable();
               });
   }
 }

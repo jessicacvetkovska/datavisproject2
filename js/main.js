@@ -1,161 +1,223 @@
-d3.csv('/js/data/Cincinnati311.csv') // Might be replaced with a new preprocessed CSV for specific attr
-.then(data => {
-    console.log("number of items: " + data.length);
+// Global variables for visualizations and data
+let allData, leafletMap, lineChart, neighborhoodChart, methodChart;
+
+// Global filter state
+let filters = {
+    neighborhood: null,
+    method: null,
+    dept: null,
+    sr_type: 'all'
+};
+
+// Parse the specific date format in CSV
+function parseDate(str) {
+    if (!str || str.trim() === '') return null;
+    const parts = str.trim().split(/\s+/);
+    const months = {Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11};
+    // Format is YYYY Month DD
+    return new Date(+parts[0], months[parts[1]], +parts[2]);
+}
+
+// Load the dataset
+d3.csv('js/data/311Sample.csv').then(data => {
+    allData = data;
+
+    // Data Preprocessing
+    allData.forEach(d => {
+        d.LATITUDE = +d.LATITUDE; 
+        d.LONGITUDE = +d.LONGITUDE;  
+        
+        // Parse dates for time difference calculation and line chart
+        d.DATE_CREATED_OBJ = parseDate(d.DATE_CREATED);
+        d.DATE_LAST_UPDATE_OBJ = parseDate(d.DATE_LAST_UPDATE);
+        
+        // Calculate time difference in days (Time to Update)
+        if (d.DATE_CREATED_OBJ && d.DATE_LAST_UPDATE_OBJ) {
+            const diffTime = Math.abs(d.DATE_LAST_UPDATE_OBJ - d.DATE_CREATED_OBJ);
+            d.time_diff = diffTime / (1000 * 60 * 60 * 24);
+        } else {
+            d.time_diff = 0;
+        }
+    });
+
+    // --- Initialize Visualizations --- 
     
+    // Map
+    leafletMap = new LeafletMap({ parentElement: '#my-map' }, allData);
+
+    // Line Chart
+    lineChart = new LineChart({ parentElement: '#line-chart' }, []);
+    
+    // Top Neighborhoods Bar Chart
+    neighborhoodChart = new BarChart({ 
+        parentElement: '#neighborhood-chart',
+        // Callback function triggered when a bar is clicked
+        onClick: (selectedName) => { 
+            filters.neighborhood = selectedName; 
+            updateAll(); 
+        }
+    }, []);
+
+    // Request Method Bar Chart
+    methodChart = new BarChart({ 
+        parentElement: '#method-bar-chart',
+        onClick: (selectedName) => { 
+            filters.method = selectedName; 
+            updateAll(); 
+        }
+    }, []);
+
+    // Priority Bar Chart
+    priorityChart = new BarChart({ 
+        parentElement: '#priority-chart',
+        onClick: (val) => { filters.priority = val; updateAll(); }
+    }, []);
 
 
-    function parseDate(str) {
-      if (!str || str.trim() === '') return null;
-      const parts = str.trim().split(/\s+/);
-      const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-      return new Date(+parts[0], months[parts[1]], +parts[2]); // local midnight
-    }
+    // Initialize Department Bar Chart
+    deptChart = new BarChart({ 
+        parentElement: '#dept-chart',
+        onClick: (selectedName) =>{
+            filters.dept = selectedName;
+            updateAll();
+        }
+    }, []);
 
-    data.forEach(d => {
-      d.LATITUDE = +d.LATITUDE; 
-      d.LONGITUDE = +d.LONGITUDE;  
-      d.DATE_CREATED = parseDate(d.DATE_CREATED);
-      const updateDate = parseDate(d.DATE_LAST_UPDATE);
-      
-      // Store the parsed date objects
-      d.DATE_CREATED_OBJ = d.DATE_CREATED;
-      
-      // Calculate time difference in days
-      if (d.DATE_CREATED && updateDate) {
-        const diffTime = Math.abs(updateDate - d.DATE_CREATED);
-        d.time_diff = diffTime / (1000 * 60 * 60 * 24); // milliseconds to days
-      } else {
-        d.time_diff = 0;
-      }
-    });
-
-    // Initialize map and then show it
-    leafletMap = new LeafletMap({ parentElement: '#my-map'}, data);
-
-    // Service Type Filter
+    
+    // --- Event Listeners for UI Elements ---
+    
+    // Service Type Dropdown
     document.getElementById('sr-type-filter').addEventListener('change', function() {
-    leafletMap.filterBySRType(this.value);
-    });
-  d3.select('#btn-light').on('click', () => {
-    leafletMap.setBackground(
-      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    );
+        filters.sr_type = this.value;
+        updateAll();
     });
 
-  d3.select('#btn-dark').on('click', () => {
-    leafletMap.setBackground(
-      'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
-      '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    );
-  });
-
-    // Color Filter
+    // Color By Dropdown
     document.getElementById('color-by-filter').addEventListener('change', function() {
         leafletMap.changeColorBy(this.value);
     });
 
+
+    // Light v. Dark Map Background Buttons
     d3.select('#btn-light').on('click', () => {
-    leafletMap.setBackground(
-      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    );
+        leafletMap.setBackground('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
     });
 
     d3.select('#btn-dark').on('click', () => {
-    leafletMap.setBackground(
-      'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.{ext}',
-      '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>'
-    );
-  });
+        leafletMap.setBackground('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png');
+    });
 
-  const barchartData = d3.rollups(
-  data,
-  v => v.length,
-  d => d.PRIORITY        // ← d not d3
-)
-.map(([priority, count]) => ({ priority, count }))
-.sort((a, b) => a.priority - b.priority);  // sort numerically by priority
+    // Initial render call to populate all charts
+    updateAll();
 
-console.log('barchart data:', barchartData);  // verify it looks right
-
-barchart = new BarChart({ parentElement: '#chart', yAxisLabel: 'Number of Calls' }, barchartData);
-barchart.updateVis();
+}).catch(error => console.error("Error loading CSV:", error));
 
 
-// Line Chart Initialization
- const binnedData = d3.rollups(
-  data.filter(d => d.DATE_CREATED !== null),
-  v => v.length,          
-  d => +d3.timeDay.floor(d.DATE_CREATED)  // ← groups records by day
-)
-.map(([date, count]) => ({ date, count }))
-.sort((a, b) => a.date - b.date);   // sort chronologically
-console.log('max count:', d3.max(binnedData, d => d.count));
-lineChart = new LineChart({ parentElement: '#line-chart' }, binnedData);
-lineChart.updateVis();
+/**
+ * Central function to filter data and update all active visualizations.
+ */
+function updateAll() {
+    // Fully Filtered Data (for Map and Line Chart)
+    // Filters by: Dropdown + Neighborhood selection + Method selection + Priority Selection
+    let fullyFilteredData = allData.filter(d => {
+        const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
+        const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
+        const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
+        const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
+        return matchType && matchNeighborhood && matchMethod && matchPriority && matchDept;
+    });
 
-//------------------------------------------------------------------------------
+    // Data for Neighborhood Chart
+    // Filters by: Dropdown + Method selection + Priority Selection
+    let neighborhoodViewData = allData.filter(d => {
+        const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
+        const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
+        const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
+        return matchType && matchMethod && matchPriority && matchDept;
+    });
 
-// Neighborhood request distributions
-const neighborhoodCounts = d3.rollups(
-    data.filter(d => d.NEIGHBORHOOD && d.NEIGHBORHOOD !== "N/A"),
-    v => v.length,
-    d => d.NEIGHBORHOOD
-)
-.map(([name, count]) => ({ name, count }))
-.sort((a, b) => b.count - a.count) // Sort descending
-.slice(0, 10); // Display Top 10 districts
+    // Data for Method Chart
+    // Filters by: Dropdown + Neighborhood selection + Priority Selection
+    let methodViewData = allData.filter(d => {
+        const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
+        const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
+        const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
+        return matchType && matchNeighborhood && matchPriority && matchDept;
+    });
+    // Data for Priority Chart
+    // Filters by: Dropdown + Neighborhood selection + Method Selection
+    let priorityViewData = allData.filter(d => {
+        const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
+        const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
+        const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
+        return matchType && matchNeighborhood && matchMethod && matchDept;
+    });
 
-// Initialize Neighborhoods Bar Chart
-const barChart = new NBH_Req_BarChart({ 
-    parentElement: '#bar-chart',
-    containerWidth: 500,
-    containerHeight: 300
-}, neighborhoodCounts);
-barChart.updateVis();
+    // Data for Department Chart
+    // Filters by: Dropdown + Neighborhood selection + Method Selection + Priority Selection
+    let deptViewData = allData.filter(d => {
+        const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
+        const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
+        const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
+        const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
+        return matchType && matchNeighborhood && matchMethod && matchPriority;
+    });
 
-// Request method distributions
-const methodCounts = d3.rollups(
-    data.filter(d => d.METHOD_RECEIVED), // Filter out empty values
-    v => v.length,
-    d => d.METHOD_RECEIVED
-)
-.map(([name, count]) => ({ name, count }))
-.sort((a, b) => b.count - a.count); // Sort descending
+    
+    // --- Update Visualizations ---
+    leafletMap.data = fullyFilteredData;
+    leafletMap.updateVis();
 
-//------------------------------------------------------------------------------
+    lineChart.data = d3.rollups(fullyFilteredData, v => v.length, d => +d3.timeDay.floor(d.DATE_CREATED_OBJ))
+        .map(([date, count]) => ({ date, count })).sort((a,b) => a.date - b.date);
+    lineChart.updateVis();
 
-// Initialize Method Bar Chart
-const methodChart = new NBH_Req_BarChart({ 
-    parentElement: '#method-bar-chart',
-    containerWidth: 500,
-    containerHeight: 300,
-    // We can pass custom margins if method names are long
-    margin: { top: 20, right: 20, bottom: 80, left: 60 } 
-}, methodCounts);
+    // Neighborhood Bar Chart updates based on other selections
+    neighborhoodChart.data = d3.rollups(neighborhoodViewData, v => v.length, d => d.NEIGHBORHOOD)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+    neighborhoodChart.updateVis();
 
-methodChart.updateVis();
+    // Method Bar Chart updates based on other selections
+    methodChart.data = d3.rollups(methodViewData, v => v.length, d => d.METHOD_RECEIVED)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+    methodChart.updateVis();
 
+    // Dept Bar Chart updates based on other selections
+    deptChart.data = d3.rollups(deptViewData, v => v.length, d => d.DEPT_NAME)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+    deptChart.updateVis();
 
-// Initialize Number of Calls by Responding Department Chart
-const deptCounts = d3.rollups(
-    data.filter(d => d.DEPT_NAME && d.DEPT_NAME !== "N/A"),
-    v => v.length,
-    d => d.DEPT_NAME
-)
-.map(([name, count]) => ({ name, count }))
-.sort((a, b) => b.count - a.count); // Sort descending
+    // Priority Bar Chart updates based on other selections
+    const priorityOrder = { 'STANDARD': 0, 'PRIORITY': 1, 'HAZARDOUS': 2 };
+    priorityChart.data = d3.rollups(priorityViewData, v => v.length, d => d.PRIORITY)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => (priorityOrder[a.name] || 0) - (priorityOrder[b.name] || 0));
+    priorityChart.updateVis();
 
-// Initialize Department Bar Chart
-const deptChart = new NBH_Req_BarChart({ 
-    parentElement: '#dept-chart',
-    containerWidth: 500,
-    containerHeight: 300
-}, deptCounts);
-deptChart.updateVis();
+    // --- Update Neighborhood Chart ---
+    neighborhoodChart.config.colorScale = (name) => {
+        const cleanName = name ? name.toUpperCase() : "N/A";
+        return leafletMap.colorScaleNeighborhood(cleanName);
+    };
+    neighborhoodChart.updateVis();
 
-})
-  .catch(error => console.error(error));
+    // --- Update Priority Chart ---
+    priorityChart.config.colorScale = (name) => {
+        return leafletMap.colorScalePriority(name);
+    };
+    priorityChart.updateVis();
 
-
+    // --- Update Dept Chart ---
+    deptChart.config.colorScale = (name) => {
+        return leafletMap.colorScaleAgency ? leafletMap.colorScaleAgency(name) : 'steelblue';
+    };
+    deptChart.updateVis();
+}
