@@ -21,6 +21,8 @@ class LeafletMap {
     let vis = this;
     vis.fullData = vis.data;
 
+    
+
     // Define Domains for Legends
     vis.neighborhoods = [...new Set(vis.fullData.map(d => d.NEIGHBORHOOD))].sort();
     vis.agencies = [...new Set(vis.fullData.map(d => d.DEPT_NAME))].sort();
@@ -202,6 +204,9 @@ class LeafletMap {
           }
       }
 
+
+
+
       // Create the legend boxes
       const items = legendContainer.selectAll('.legend-item')
         .data(legendData)
@@ -242,6 +247,7 @@ class LeafletMap {
   });
 
   vis.base_layer.addTo(vis.theMap);
+
 }
 
   // Main drawing function (handles init, zoom, data filtering)
