@@ -248,13 +248,6 @@ class LeafletMap {
 
   vis.base_layer.addTo(vis.theMap);
 
-      const brush = d3.brushX()
-        .extent([[0, 0], [width, height]])
-        .on("brush end", brushed);
-
-      vis.append("g")
-      .attr("class", "brush")
-      .call(brush);
 }
 
   // Main drawing function (handles init, zoom, data filtering)
