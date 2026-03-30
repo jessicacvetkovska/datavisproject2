@@ -6,7 +6,9 @@ let filters = {
     neighborhood: null,
     method: null,
     dept: null,
-    sr_type: 'all'
+    sr_type: 'all',
+    timeRange: null, // [startDate, endDate] or null
+    spatialSelection: null // array of selected data points or null
 };
 
 // Parse the specific date format in CSV
@@ -43,10 +45,22 @@ d3.csv('js/data/311Sample.csv').then(data => {
     // --- Initialize Visualizations --- 
     
     // Map
-    leafletMap = new LeafletMap({ parentElement: '#my-map' }, allData);
+    leafletMap = new LeafletMap({ 
+        parentElement: '#my-map',
+        onBrush: (selectedPoints) => {
+            filters.spatialSelection = selectedPoints;
+            updateAll();
+        }
+    }, allData);
 
     // Line Chart
-    lineChart = new LineChart({ parentElement: '#line-chart' }, []);
+    lineChart = new LineChart({ 
+        parentElement: '#line-chart',
+        onBrush: (timeRange) => {
+            filters.timeRange = timeRange;
+            updateAll();
+        }
+    }, []);
     
     // Top Neighborhoods Bar Chart
     neighborhoodChart = new BarChart({ 
@@ -118,53 +132,63 @@ d3.csv('js/data/311Sample.csv').then(data => {
  */
 function updateAll() {
     // Fully Filtered Data (for Map and Line Chart)
-    // Filters by: Dropdown + Neighborhood selection + Method selection + Priority Selection
+    // Filters by: Dropdown + Neighborhood selection + Method selection + Priority Selection + Time Range + Spatial Selection
     let fullyFilteredData = allData.filter(d => {
         const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
         const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
         const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
         const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
-        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
-        return matchType && matchNeighborhood && matchMethod && matchPriority && matchDept;
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept);
+        const matchTime = (!filters.timeRange || (d.DATE_CREATED_OBJ >= filters.timeRange[0] && d.DATE_CREATED_OBJ <= filters.timeRange[1]));
+        const matchSpatial = (!filters.spatialSelection || filters.spatialSelection.includes(d));
+        return matchType && matchNeighborhood && matchMethod && matchPriority && matchDept && matchTime && matchSpatial;
     });
 
     // Data for Neighborhood Chart
-    // Filters by: Dropdown + Method selection + Priority Selection
+    // Filters by: Dropdown + Method selection + Priority Selection + Time Range + Spatial Selection
     let neighborhoodViewData = allData.filter(d => {
         const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
         const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
         const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
-        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
-        return matchType && matchMethod && matchPriority && matchDept;
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept);
+        const matchTime = (!filters.timeRange || (d.DATE_CREATED_OBJ >= filters.timeRange[0] && d.DATE_CREATED_OBJ <= filters.timeRange[1]));
+        const matchSpatial = (!filters.spatialSelection || filters.spatialSelection.includes(d));
+        return matchType && matchMethod && matchPriority && matchDept && matchTime && matchSpatial;
     });
 
     // Data for Method Chart
-    // Filters by: Dropdown + Neighborhood selection + Priority Selection
+    // Filters by: Dropdown + Neighborhood selection + Priority Selection + Time Range + Spatial Selection
     let methodViewData = allData.filter(d => {
         const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
         const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
         const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
-        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
-        return matchType && matchNeighborhood && matchPriority && matchDept;
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept);
+        const matchTime = (!filters.timeRange || (d.DATE_CREATED_OBJ >= filters.timeRange[0] && d.DATE_CREATED_OBJ <= filters.timeRange[1]));
+        const matchSpatial = (!filters.spatialSelection || filters.spatialSelection.includes(d));
+        return matchType && matchNeighborhood && matchPriority && matchDept && matchTime && matchSpatial;
     });
     // Data for Priority Chart
-    // Filters by: Dropdown + Neighborhood selection + Method Selection
+    // Filters by: Dropdown + Neighborhood selection + Method Selection + Time Range + Spatial Selection
     let priorityViewData = allData.filter(d => {
         const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
         const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
         const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
-        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept)
-        return matchType && matchNeighborhood && matchMethod && matchDept;
+        const matchDept = (!filters.dept || d.DEPT_NAME == filters.dept);
+        const matchTime = (!filters.timeRange || (d.DATE_CREATED_OBJ >= filters.timeRange[0] && d.DATE_CREATED_OBJ <= filters.timeRange[1]));
+        const matchSpatial = (!filters.spatialSelection || filters.spatialSelection.includes(d));
+        return matchType && matchNeighborhood && matchMethod && matchDept && matchTime && matchSpatial;
     });
 
     // Data for Department Chart
-    // Filters by: Dropdown + Neighborhood selection + Method Selection + Priority Selection
+    // Filters by: Dropdown + Neighborhood selection + Method Selection + Priority Selection + Time Range + Spatial Selection
     let deptViewData = allData.filter(d => {
         const matchType = (filters.sr_type === 'all' || d.SR_TYPE_DESC === filters.sr_type);
         const matchNeighborhood = (!filters.neighborhood || d.NEIGHBORHOOD === filters.neighborhood);
         const matchMethod = (!filters.method || d.METHOD_RECEIVED === filters.method);
         const matchPriority = (!filters.priority || d.PRIORITY === filters.priority);
-        return matchType && matchNeighborhood && matchMethod && matchPriority;
+        const matchTime = (!filters.timeRange || (d.DATE_CREATED_OBJ >= filters.timeRange[0] && d.DATE_CREATED_OBJ <= filters.timeRange[1]));
+        const matchSpatial = (!filters.spatialSelection || filters.spatialSelection.includes(d));
+        return matchType && matchNeighborhood && matchMethod && matchPriority && matchTime && matchSpatial;
     });
 
     

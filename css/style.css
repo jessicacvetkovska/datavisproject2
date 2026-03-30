@@ -49,3 +49,7 @@
     stroke: #000;
     stroke-width: 2px;
 }
+
+.brush-rect {
+    pointer-events: none;
+}
