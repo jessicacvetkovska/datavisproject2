@@ -25,14 +25,16 @@ class LeafletMap {
     let vis = this;
     vis.fullData = vis.data;
 
-    // --- 1. CRITICAL FIX: Prevent "Already Initialized" Error ---
-        // We remove the old map instance from the DOM element before starting
+    // Track heatmap visibility state
+    vis.showHeatmap = false;
+
+    // Remove the old map instance from the DOM element before starting
     let mapContainer = L.DomUtil.get(vis.config.parentElement.replace('#', ''));
     if (mapContainer && mapContainer._leaflet_id !== undefined) {
         mapContainer._leaflet_id = null;
     }
-// --- 2. Unique Service Type Color Scale ---
-        // We get all unique types and use the Golden Ratio to pick distinct colors
+    // Unique Service Type Color Scale
+    // get all unique types and use the Golden Ratio to pick distinct colors
     vis.serviceTypes = [...new Set(vis.fullData.map(d => d.SR_TYPE_DESC))].sort();
     
     // The Golden Ratio (phi) helps spread hues evenly around the color wheel
@@ -45,6 +47,7 @@ class LeafletMap {
             hue = (hue + phi) % 1; // Jumps to a new part of the wheel
             return d3.hsl(hue * 360, 0.8, 0.5).toString();
         }));
+
     // Define Domains for Legends
     vis.neighborhoods = [...new Set(vis.fullData.map(d => d.NEIGHBORHOOD))].sort();
     vis.agencies = [...new Set(vis.fullData.map(d => d.DEPT_NAME))].sort();
@@ -158,7 +161,7 @@ class LeafletMap {
 
 
     // Initialize the Heatmap Layer
-    // We start with an empty array; it will be populated in updateVis
+    // Start with an empty array; it will be populated in updateVis
     vis.heatLayer = L.heatLayer([], {
         radius: 25,
         blur: 15,
@@ -170,7 +173,7 @@ class LeafletMap {
     // Ensure the SVG (circles) stays on top of the heatmap for interaction
     vis.svg.raise();
     
-// SVG layer for individual points
+    // SVG layer for individual points
     L.svg().addTo(vis.theMap);
     vis.overlay = d3.select(vis.theMap.getPanes().overlayPane);
     vis.svg = vis.overlay.select('svg').attr("pointer-events", "auto");
@@ -187,7 +190,7 @@ class LeafletMap {
       
       // Neighborhood
       if (vis.colorBy === 'neighborhood') {
-        // We use .toUpperCase() to ensure it matches our defined list exactly
+        // Use .toUpperCase() to ensure it matches defined list exactly
         const neighborhoodName = d.NEIGHBORHOOD ? d.NEIGHBORHOOD.toUpperCase() : "N/A";
         return vis.colorScaleNeighborhood(neighborhoodName);
       }
@@ -249,11 +252,11 @@ class LeafletMap {
         .append('div')
         .attr('class', 'legend-item'); // Uses CSS from style.css
 
-    items.append('div')
+      items.append('div')
         .attr('class', 'legend-color') // Uses CSS from style.css
         .style('background-color', d => d.color);
 
-    items.append('span')
+      items.append('span')
         .text(d => d.label);
     }
 
@@ -285,13 +288,30 @@ class LeafletMap {
 
 }
 
+// Toggle heatmap function
+toggleHeatmap(isVisible) {
+    let vis = this;
+    vis.showHeatmap = isVisible;
+    
+    if (vis.showHeatmap) {
+        vis.theMap.addLayer(vis.heatLayer);
+    } else {
+        vis.theMap.removeLayer(vis.heatLayer);
+    }
+    
+    // Refresh the view to ensure points/heatmap are in sync
+    vis.updateVis();
+}
+
   // Main drawing function (handles init, zoom, data filtering)
   updateVis() {
     let vis = this;
-
-    // Update Heatmap
-    const heatPoints = vis.data.map(d => [d.LATITUDE, d.LONGITUDE, 1]);
-    vis.heatLayer.setLatLngs(heatPoints);
+    
+    // Only update heatmap data if it's currently active
+    if (vis.showHeatmap) {
+        const heatPoints = vis.data.map(d => [d.LATITUDE, d.LONGITUDE, 1]);
+        vis.heatLayer.setLatLngs(heatPoints);
+    }
 
     vis.Dots = vis.svg.selectAll('circle')
         .data(vis.data)
