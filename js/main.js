@@ -25,7 +25,7 @@ function parseDate(str) {
 }
 
 // Load the dataset
-d3.csv('js/data/Cincinnati311.csv').then(data => {
+d3.csv('js/data/311Sample.csv').then(data => {
     allData = data;
 
     // Data Preprocessing
@@ -194,6 +194,17 @@ function updateAll() {
         const matchSpatial = (!filters.spatialSelection || filters.spatialSelection.includes(d));
         return matchType && matchNeighborhood && matchMethod && matchPriority && matchTime && matchSpatial;
     });
+
+
+    // Update the chart color assignments
+    neighborhoodChart.config.colorScale = (name) => {
+        if (leafletMap.colorBy === 'none') {
+            // Since a neighborhood has many service types, we can't color it by one type.
+            // We stick to the Neighborhood scale or steelblue here.
+            return leafletMap.colorScaleNeighborhood(name.toUpperCase());
+        }
+        return leafletMap.colorScaleNeighborhood(name.toUpperCase());
+    };
 
     
     // --- Update Visualizations ---
