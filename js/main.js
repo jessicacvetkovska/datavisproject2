@@ -25,7 +25,7 @@ function parseDate(str) {
 }
 
 // Load the dataset
-d3.csv('js/data/Cincinnati311.csv').then(data => {
+d3.csv('js/data/311Sample.csv').then(data => {
     allData = data;
 
     // Data Preprocessing
@@ -115,7 +115,11 @@ d3.csv('js/data/Cincinnati311.csv').then(data => {
         leafletMap.changeColorBy(this.value);
     });
 
-
+    // Heatmap Toggle Listener
+    document.getElementById('heatmap-toggle').addEventListener('change', function() {
+        leafletMap.toggleHeatmap(this.checked);
+    });
+    
     // Light v. Dark Map Background Buttons
     d3.select('#btn-light').on('click', () => {
         leafletMap.setBackground('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
