@@ -25,8 +25,26 @@ class LeafletMap {
     let vis = this;
     vis.fullData = vis.data;
 
+    // --- 1. CRITICAL FIX: Prevent "Already Initialized" Error ---
+        // We remove the old map instance from the DOM element before starting
+    let mapContainer = L.DomUtil.get(vis.config.parentElement.replace('#', ''));
+    if (mapContainer && mapContainer._leaflet_id !== undefined) {
+        mapContainer._leaflet_id = null;
+    }
+// --- 2. Unique Service Type Color Scale ---
+        // We get all unique types and use the Golden Ratio to pick distinct colors
+    vis.serviceTypes = [...new Set(vis.fullData.map(d => d.SR_TYPE_DESC))].sort();
     
+    // The Golden Ratio (phi) helps spread hues evenly around the color wheel
+    const phi = 0.618033988749895;
+    let hue = 0;
 
+    vis.colorScaleServiceType = d3.scaleOrdinal()
+        .domain(vis.serviceTypes)
+        .range(vis.serviceTypes.map(() => {
+            hue = (hue + phi) % 1; // Jumps to a new part of the wheel
+            return d3.hsl(hue * 360, 0.8, 0.5).toString();
+        }));
     // Define Domains for Legends
     vis.neighborhoods = [...new Set(vis.fullData.map(d => d.NEIGHBORHOOD))].sort();
     vis.agencies = [...new Set(vis.fullData.map(d => d.DEPT_NAME))].sort();
@@ -152,6 +170,11 @@ class LeafletMap {
     // Ensure the SVG (circles) stays on top of the heatmap for interaction
     vis.svg.raise();
     
+// SVG layer for individual points
+    L.svg().addTo(vis.theMap);
+    vis.overlay = d3.select(vis.theMap.getPanes().overlayPane);
+    vis.svg = vis.overlay.select('svg').attr("pointer-events", "auto");
+
     // Call updateVis to draw the initial points
     vis.updateVis();
   }
@@ -175,7 +198,7 @@ class LeafletMap {
       // Agency
       if (vis.colorBy === 'agency') return vis.colorScaleAgency(d.DEPT_NAME); 
       
-      return "steelblue"; // Default fallback
+      return vis.colorScaleServiceType(d.SR_TYPE_DESC);
   }
 
   // Set color based on filter
@@ -265,6 +288,10 @@ class LeafletMap {
   // Main drawing function (handles init, zoom, data filtering)
   updateVis() {
     let vis = this;
+
+    // Update Heatmap
+    const heatPoints = vis.data.map(d => [d.LATITUDE, d.LONGITUDE, 1]);
+    vis.heatLayer.setLatLngs(heatPoints);
 
     vis.Dots = vis.svg.selectAll('circle')
         .data(vis.data)
